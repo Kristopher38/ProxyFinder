@@ -59,10 +59,23 @@ class ProxyFinder(object):
 				break
 			else:
 				# restore SSLContext, see ProxyFinderProcess.async_to_result
-				if proxy._ssl_context is None:
-					proxy._ssl_context = _create_unverified_context()
+				proxy = self._restore_ssl_context(proxy)
 				self.proxies.append(proxy)
-
+				
+	def wait_for_proxy(self, timeout=None):
+		try:
+			proxy = self._results_queue.get(True, timeout)
+		except Empty:
+			return
+		else:
+			proxy = self._restore_ssl_context(proxy)
+			self.proxies.append(proxy)
+			
+	def _restore_ssl_context(self, proxy):
+		if proxy._ssl_context is None:
+			proxy._ssl_context = _create_unverified_context()
+			return proxy
+				
 class ProxyFinderProcess(multiprocessing.Process):
 	"""
 		Wrapper for proxybroker.Broker.find() which runs it in a separate process 
