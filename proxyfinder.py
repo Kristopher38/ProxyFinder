@@ -25,6 +25,12 @@ class ProxyFinder(object):
 			passed down to proxybroker.Broker.find()
 			Note: if limit = 0, proxy grabbing will last forever
 		"""
+		try:
+			multiprocessing.set_start_method('spawn')
+		except RuntimeError:
+			if multiprocessing.get_start_method() is not 'spawn':
+				raise RuntimeError("Multiprocessing method of starting child processes has to be 'spawn'")
+			
 		self._results_queue = multiprocessing.Queue()
 		self._poison_pill = multiprocessing.Event()
 		self._proxy_finder = ProxyFinderProcess(self._results_queue, self._poison_pill, types=types, data=data, 
